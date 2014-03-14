@@ -1,0 +1,31 @@
+{
+    "name": "excel2json",
+    "version": "0.0.1",
+    "description": "excel2json",
+    "main": "index.js",
+    "scripts": {
+        "test": "mocha -r should -R spec --recursive test",
+        "jshint": "jshint lib/*.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/yuhei-a/excel2json.git"
+    },
+    "keywords": [
+        "excel"
+    ],
+    "author": "Yuhei Aihara",
+    "license": "BSD",
+    "bugs": {
+        "url": "https://github.com/yuhei-a/excel2json/issues"
+    },
+    "dependencies": {
+        "excel": "~0.1.1",
+        "async": "~0.2.10"
+    },
+    "devDependencies": {
+        "should": "~3.1.3",
+        "mocha": "~1.17.1",
+        "jshint": "~2.4.4"
+    }
+}
