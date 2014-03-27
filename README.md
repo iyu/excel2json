@@ -35,7 +35,7 @@ converted to Object
 
 ## Installation
 ```
-npm install https://github.com/yuhei-a/excel2json.git@0.0.1
+npm install git+https://github.com/yuhei-a/excel2json.git@0.0.1
 ```
 
 ## Usage
