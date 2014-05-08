@@ -1,6 +1,6 @@
 {
     "name": "excel2json",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "excel2json",
     "main": "index.js",
     "scripts": {
@@ -12,7 +12,10 @@
         "url": "git://github.com/yuhei-a/excel2json.git"
     },
     "keywords": [
-        "excel"
+        "excel2json",
+        "excel",
+        "parse",
+        "json"
     ],
     "author": "Yuhei Aihara",
     "license": "BSD",
