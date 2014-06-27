@@ -6,7 +6,7 @@
     // useful when your codebase is shared with a big number of developers
     // with different skill levels.
     
-    "bitwise"       : true,     // Prohibit bitwise operators (&, |, ^, etc.).
+    "bitwise"       : false,     // Prohibit bitwise operators (&, |, ^, etc.).
     "curly"         : true,     // Require {} for every new block or scope.
     "eqeqeq"        : true,     // Require triple equals i.e. `===`.
     "forin"         : false,    // Tolerate `for in` loops without `hasOwnPrototype`.
@@ -91,9 +91,6 @@
 
     "maxerr"        : 100,      // Maximum errors before stopping.
     "predef"        : [         // Extra globals.
-        //"exampleVar",
-        //"anotherCoolGlobal",
-        //"iLoveDouglas",
         "describe",             // Used by mocha
         "it",                   // Used by mocha
         "before",               // Used by mocha

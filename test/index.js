@@ -454,10 +454,12 @@ describe('#format and #extend', function() {
 
 describe('#parse', function() {
     it(filepath, function(done) {
-        excel2json.parse(filepath, function(err, result) {
+        excel2json.parse(filepath, [], function(err, result) {
             should.not.exist(err);
             should.exist(result);
-            result.should.eql([
+            result.should.have.length(2);
+            result[0].should.property('num', 1);
+            result[0].should.property('contents', [
                 {
                     _id: 'aaa',
                     array: [
@@ -482,6 +484,16 @@ describe('#parse', function() {
                 {
                     _id: 'bbb',
                     key: 'fuga'
+                }
+            ]);
+            result[1].should.property('contents', [
+                {
+                    _id: 'a',
+                    date: new Date('2014/06/01 05:00').getTime()
+                },
+                {
+                    _id: 'b',
+                    date: new Date('2014/07/01 05:00').getTime()
                 }
             ]);
             done();

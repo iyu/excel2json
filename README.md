@@ -50,13 +50,22 @@ example sheet.xlsx
 | 4 | first  | one      | 1                |   |
 | 5 | second | two      | 2                |   |
 | 6 |        |          |                  |   |
-
+Sheet1
 ```
 var excel2json = require('excel2json');
 
-excel2json.parse('./sheet.xlsx', function(err, data) {
+var filename = './sheet.xlsx';
+var sheets = [1];
+excel2json.parse(filename, sheets, function(err, data) {
     console.log(data);
-    // [ { _id: 'first', obj: { code: 'one', value: 1 } }, { _id: 'second', obj: { code: 'two', value: 2 } } ]
+    // [{
+        num: 1,         // sheet number
+        name: 'Sheet1', // sheet name
+        option: {},     // sheet option (A1)
+        contents: [
+            { _id: 'first', obj: { code: 'one', value: 1 } }, { _id: 'second', obj: { code: 'two', value: 2 } }
+        ]
+    }]
 });
 ```
 
@@ -79,6 +88,7 @@ Specify the key name.
 * `#` Use when the array.
 * `:number` Use when the parameters of type `Number`. 
 * `:boolean` Use when the parameters of type `Boolean`.
+* `:date` Use when the parameters of unix time.
 * `:index` Use when the array of array.
 
 ### An example of a complex format
