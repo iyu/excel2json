@@ -2,7 +2,6 @@ var should = require('should');
 
 var excel2json = require('../');
 
-var filepath = 'test/data/index.xlsx';
 
 describe('#celname2index', function() {
     it('"AA1" be [26,0]', function(done) {
@@ -46,7 +45,7 @@ describe('#format', function() {
             should.exist(result);
             should.exist(isOrigin);
             result.should.eql(expected);
-            isOrigin.should.be.true;
+            isOrigin.should.equal(true);
             done();
         });
     });
@@ -70,7 +69,7 @@ describe('#format', function() {
             should.exist(result);
             should.exist(isFirst);
             result.should.eql(expected);
-            isFirst.should.be.false;
+            isFirst.should.equal(false);
             done();
         });
     });
@@ -451,8 +450,8 @@ describe('#format and #extend', function() {
     });
 });
 
-
 describe('#parse', function() {
+    var filepath = 'test/data/index.xlsx';
     it(filepath, function(done) {
         excel2json.parse(filepath, [], function(err, result) {
             should.not.exist(err);
@@ -497,6 +496,23 @@ describe('#parse', function() {
                 }
             ]);
             done();
+        });
+    });
+});
+
+describe('#toJson', function() {
+    var filepath = 'test/data/test.xlsx';
+    it(filepath, function(done) {
+        excel2json.parse(filepath, [], function(err, result) {
+            should.not.exist(err);
+            should.exist(result);
+
+            excel2json.toJson(result, function(_err, _result) {
+                should.not.exist(_err);
+                should.exist(_result);
+                _result.should.eql(require('./data/test.json'));
+                done();
+            });
         });
     });
 });
