@@ -4,7 +4,7 @@
   "description": "excel2json",
   "main": "index.js",
   "scripts": {
-    "test": "mocha -r should -R spec --recursive test --timeout 40000",
+    "test": "mocha -r should -R spec --recursive test",
     "jshint": "jshint lib/*.js"
   },
   "repository": {

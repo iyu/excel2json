@@ -61,9 +61,20 @@ excel2json.parse(filename, sheets, function(err, data) {
     // [{
     //    num: 1,                    // sheet number
     //    name: 'Sheet1',            // sheet name
-    //    option: { name: 'Test' },  // sheet option (A1)
+    //    option: {                  // option extend sheet option (ex: A1)
+    //        name: 'Test'
+    //        attr_line:
+    //        data_line:
+    //        ref_key: '_id',
+    //        format: {
+    //            A: { type: null, keys: [ '_id' ] },
+    //            B: { type: null, keys: [ 'obj', 'code' ] },
+    //            C: { type: 'number', keys: [ 'obj', 'value' ] }
+    //        }
+    //    },
     //    contents: [
-    //        { _id: 'first', obj: { code: 'one', value: 1 } }, { _id: 'second', obj: { code: 'two', value: 2 } }
+    //        { _id: 'first', obj: { code: 'one', value: 1 } },
+    //        { _id: 'second', obj: { code: 'two', value: 2 } }
     //    ]
     // }]
 
@@ -91,10 +102,11 @@ Setup options.
 var excel2json = require('excel2json');
 
 excel2json.setup({
-    optionCell: 'A1', // Cell with a custom sheet option. It is not yet used now. (default: 'A1'
-    attrLine: '2',    // Line with a data attribute. (default: '2'
-    dataLine: '4',    // Line with a data. (default: '4'
-    refKey: '_id'     // ref key. (default: '_id'
+    option_cell: 'A1', // Cell with a custom sheet option. It is not yet used now. (default: 'A1'
+    attr_line: '2',    // Line with a data attribute. (default: '2'
+    data_line: '4',    // Line with a data. (default: '4'
+    ref_key: '_id'     // ref key. (default: '_id'
+    logger: Logger     // custom logger.
 });
 ```
 
@@ -103,9 +115,9 @@ sheet option. setting with optionCell (default: 'A1'
 * `name`
 * `type`
 * `key`
-* `attrLine`
-* `dataLine`
-* `refKey`
+* `attr_line`
+* `data_line`
+* `ref_key`
 
 
 ### Attribute
