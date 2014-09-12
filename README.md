@@ -67,9 +67,9 @@ excel2json.parse(filename, sheets, function(err, data) {
     //        data_line:
     //        ref_key: '_id',
     //        format: {
-    //            A: { type: null, keys: [ '_id' ] },
-    //            B: { type: null, keys: [ 'obj', 'code' ] },
-    //            C: { type: 'number', keys: [ 'obj', 'value' ] }
+    //            A: { type: null, key: '_id', keys: [ '_id' ] },
+    //            B: { type: null, key: 'obj.code', keys: [ 'obj', 'code' ] },
+    //            C: { type: 'number', key: 'obj.value', keys: [ 'obj', 'value' ] }
     //        }
     //    },
     //    contents: [
