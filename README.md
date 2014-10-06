@@ -125,8 +125,9 @@ Specify the key name.
 
 **Special character**
 * `#` Use when the array.
-* `:number` Use when the parameters of type `Number`. 
-* `:boolean` Use when the parameters of type `Boolean`.
+* `$` Use when the split array.
+* `:number` or `:num` Use when the parameters of type `Number`.
+* `:boolean` or `:bool` Use when the parameters of type `Boolean`.
 * `:date` Use when the parameters of unix time.
 * `:index` Use when the array of array.
 
