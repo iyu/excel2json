@@ -9,7 +9,7 @@ describe('#parse', function() {
             should.not.exist(err);
             should.exist(result);
             should.not.exist(errList);
-            result.should.have.length(2);
+            result.should.have.length(3);
             result[0].should.property('num', 1);
             result[0].should.property('name', 'Sheet1');
             result[0].should.property('opts', {
@@ -54,6 +54,40 @@ describe('#parse', function() {
             ]);
             result[1].should.property('list', [
                 {
+                    __ref: 'aaa',
+                    bool: true,
+                    arr: [
+                        { code: 'a' },
+                        { code: 'b' }
+                    ]
+                },
+                {
+                    __ref: 'aaa',
+                    bool: false,
+                    arr: [
+                        { code: 'c' },
+                        { code: 'd' }
+                    ]
+                },
+                {
+                    __ref: 'bbb',
+                    bool: true,
+                    arr: [
+                        { code: 'a' },
+                        { code: 'b' }
+                    ]
+                },
+                {
+                    __ref: 'bbb',
+                    bool: false,
+                    arr: [
+                        { code: 'c' },
+                        { code: 'd' }
+                    ]
+                }
+            ]);
+            result[2].should.property('list', [
+                {
                     _id: 'a',
                     date: new Date('2014/06/01 05:00').getTime()
                 },
@@ -62,7 +96,37 @@ describe('#parse', function() {
                     date: new Date('2014/07/01 05:00').getTime()
                 }
             ]);
-            done();
+
+            excel2json.toJson(result, function(_err, _result) {
+                should.not.exist(_err);
+                should.exist(_result);
+                Object.keys(_result).should.have.length(2);
+                _result.should.have.property('Sheet1');
+                _result.Sheet1.should.have.property('bbb', {
+                    _id: 'bbb',
+                    key: 'fuga',
+                    obj: {
+                        array: [
+                            {
+                                bool: true,
+                                arr: [
+                                    { code: 'a' },
+                                    { code: 'b' }
+                                ]
+                            },
+                            {
+                                bool: false,
+                                arr: [
+                                    { code: 'c' },
+                                    { code: 'd' }
+                                ]
+                            }
+                        ]
+                    }
+                });
+                _result.should.have.property('Sheet2');
+                done();
+            });
         });
     });
 });
