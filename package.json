@@ -12,11 +12,11 @@
     "url": "git://github.com/yuhei-a/excel2json.git"
   },
   "keywords": [
-    "excel2json",
     "excel",
     "xlsx",
+    "json",
     "parse",
-    "json"
+    "excel2json"
   ],
   "author": "Yuhei Aihara",
   "license": "MIT",
@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "async": "^0.2.10",
-    "libxmljs": "^0.8.1",
+    "libxmljs": "^0.12.0",
     "lodash": "^2.4.1",
     "node-zip": "^1.1.0"
   },
