@@ -1,6 +1,6 @@
 {
   "name": "excel2json",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "excel2json",
   "main": "index.js",
   "scripts": {
