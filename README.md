@@ -1,3 +1,6 @@
+[![NPM version][npm-image]][npm-url]
+[![Downloads][downloads-image]][downloads-url]
+
 Excel2Json
 ==========
 
@@ -13,8 +16,9 @@ example Excel data
 | 4 | first  | one      | 1                |   |
 | 5 | second | two      | 2                |   |
 | 6 |        |          |                  |   |
+
 converted to Object
-```
+```js
 [
     {
         _id: 'first',
@@ -50,8 +54,9 @@ example sheet.xlsx
 | 4 | first          | one      | 1                |   |
 | 5 | second         | two      | 2                |   |
 | 6 |                |          |                  |   |
+
 Sheet1
-```
+```js
 var excel2json = require('excel2json');
 
 var filename = './sheet.xlsx';
@@ -98,7 +103,7 @@ excel2json.parse(filename, sheets, function(err, data) {
 
 ### Setup
 Setup options.
-```
+```js
 var excel2json = require('excel2json');
 
 excel2json.setup({
@@ -135,8 +140,8 @@ Specify the key name.
 An example of a complex format.
 
 
-[test.xlsx](https://github.com/yuhei-a/excel2json/raw/master/test/data/test.xlsx) > [test.json](https://github.com/yuhei-a/excel2json/blob/master/test/data/test.json)
-```
+[test.xlsx](https://github.com/iyu/excel2json/raw/master/test/data/test.xlsx) > [test.json](https://github.com/iyu/excel2json/blob/master/test/data/test.json)
+```js
 var excel2json = require('excel2json');
 
 excel2json.parse('test.xlsx', [], function(err, sheetDatas) {
@@ -146,5 +151,15 @@ excel2json.parse('test.xlsx', [], function(err, sheetDatas) {
 });
 ```
 
-## Test
-Run `npm test` and `npm run-script jshint`
+## Contribution
+1. Fork it ( [https://github.com/iyu/excel2json/fork](https://github.com/iyu/excel2json/fork) )
+2. Create a feature branch
+3. Commit your changes
+4. Rebase your local changes against the master branch
+5. Run test suite with the `npm test; npm run lint` command and confirm that it passes
+5. Create new Pull Request
+
+[npm-image]: https://img.shields.io/npm/v/excel2json.svg?style=flat-square
+[npm-url]: https://www.npmjs.com/package/excel2json
+[downloads-image]: https://img.shields.io/npm/dm/excel2json.svg?style=flat-square
+[downloads-url]: https://www.npmjs.com/package/excel2json
