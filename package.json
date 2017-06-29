@@ -5,11 +5,11 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha -r should -R spec --recursive test",
-    "jshint": "jshint lib/*.js"
+    "lint": "eslint ."
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/yuhei-a/excel2json.git"
+    "url": "git://github.com/iyu/excel2json.git"
   },
   "keywords": [
     "excel",
@@ -21,7 +21,7 @@
   "author": "Yuhei Aihara",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/yuhei-a/excel2json/issues"
+    "url": "https://github.com/iyu/excel2json/issues"
   },
   "dependencies": {
     "async": "^0.9.0",
@@ -30,6 +30,9 @@
     "node-zip": "^1.1.0"
   },
   "devDependencies": {
+    "eslint": "^3.19.0",
+    "eslint-config-airbnb-base": "^11.2.0",
+    "eslint-plugin-import": "^2.6.0",
     "jshint": "^2.6.3",
     "mocha": "^2.2.1",
     "should": "^5.1.0"
