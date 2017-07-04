@@ -1,5 +1,3 @@
-/* global describe, it */
-
 'use strict';
 
 const should = require('should');
