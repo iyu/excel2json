@@ -1,62 +1,59 @@
 /**
  * @fileOverview excel2json main
- * @name index.js
+ * @name index
  * @author Yuhei Aihara
  * https://github.com/iyu/excel2json
  */
 
-'use strict';
+import _ from 'lodash';
 
-const _ = require('lodash');
-const async = require('neo-async');
-
-const excelParser = require('./excel/parser');
-const logger = require('./logger');
+import excelParser from './excel/parser';
+import logger from './logger';
 
 class Excel2Json {
-  constructor() {
-    this.opts = {
-      // Cell with a custom sheet option.
-      option_cell: 'A1',
-      // Line with a data attribute.
-      attr_line: 2,
-      // Line with a data.
-      data_line: 4,
-      // ref key
-      ref_key: '_id',
-      // Custom logger.
-      logger: undefined,
-    };
-    this.logger = logger;
+  public opts = {
+    // Cell with a custom sheet option.
+    option_cell: 'A1',
+    // Line with a data attribute.
+    attr_line: 2,
+    // Line with a data.
+    data_line: 4,
+    // ref key
+    ref_key: '_id',
+    // Custom logger.
+    logger: undefined,
+  }
 
-    this._parser = {
-      number: (d) => {
-        if (d.length >= 18) {
-          // IEEE754
-          return Number(Number(d).toFixed(8));
-        }
-        return Number(d);
-      },
-      num: (d) => {
-        return this._parser.number(d);
-      },
-      boolean: (d) => {
-        return !!d && d.toLowerCase() !== 'false' && d !== '0';
-      },
-      bool: (d) => {
-        return this._parser.boolean(d);
-      },
-      date: (d) => {
-        return Math.round(
-          (
-            ((Number(d) - 25569) * 24) +
-            (new Date().getTimezoneOffset() / 60)
-          ) * 3600000);
-      },
-      auto: (d) => {
-        return isNaN(d) ? d : this._parser.number(d);
-      },
-    };
+  public logger: any = logger
+
+  private _parser: { [key: string]: Function } = {
+    number: (d: any) => {
+      if (d.length >= 18) {
+        // IEEE754
+        return Number(Number(d).toFixed(8));
+      }
+      return Number(d);
+    },
+    num: (d: any) => {
+      return this._parser.number(d);
+    },
+    boolean: (d: any) => {
+      return !!d && d.toLowerCase() !== 'false' && d !== '0';
+    },
+    bool: (d: any) => {
+      return this._parser.boolean(d);
+    },
+    date: (d: any) => {
+      return Math.round(
+        (
+          ((Number(d) - 25569) * 24)
+          + (new Date().getTimezoneOffset() / 60)
+        ) * 3600000,
+      );
+    },
+    auto: (d: any) => {
+      return Number.isFinite(Number(d)) ? d : this._parser.number(d);
+    },
   }
 
   /**
@@ -71,7 +68,7 @@ class Excel2Json {
    *     logger: CustomLogger
    * };
    */
-  setup(options) {
+  setup(options: any) {
     _.assign(this.opts, options);
 
     if (this.opts.logger) {
@@ -82,7 +79,6 @@ class Excel2Json {
     return this;
   }
 
-
   /**
    * format
    * @param {Array} cells
@@ -92,17 +88,17 @@ class Excel2Json {
    *     { cell: 'A1', value: '{}' }, { cell: 'A4', value: '_id' },,,
    * ]
    */
-  _format(cells) {
-    const opts = {};
-    let beforeRow;
-    let idx = {};
-    const list = [];
+  _format(cells: any) {
+    let beforeRow: any;
+    let idx: any = {};
+    const list: any = [];
 
-    _.assign(opts, {
+    const opts: any = {
       attr_line: this.opts.attr_line,
       data_line: this.opts.data_line,
       ref_key: this.opts.ref_key,
-    });
+      format: undefined,
+    };
 
     _.forEach(cells, (cell) => {
       if (beforeRow !== cell.row) {
@@ -134,7 +130,7 @@ class Excel2Json {
       }
 
       const format = opts.format && opts.format[cell.column];
-      let data;
+      let data: any;
       let _idx;
 
       if (cell.row < opts.data_line || !format) {
@@ -233,7 +229,7 @@ class Excel2Json {
    * @param data
    * @private
    */
-  _findOrigin(dataMap, opts, data) {
+  _findOrigin(dataMap: any, opts: any, data: any) {
     let origin = dataMap[data.__ref];
     if (!origin || !opts.key) {
       this.logger.error('not found origin.', JSON.stringify(data));
@@ -294,51 +290,50 @@ class Excel2Json {
    * @param {Array} sheets
    * @param {Function} callback
    */
-  parse(filepath, sheets, callback) {
-    async.angelFall([
-      (next) => {
-        excelParser.execute(filepath, sheets, next);
-      },
-      (excelData, next) => {
-        let errList;
-        async.map(excelData, (sheetData, done) => {
-          let result;
-          try {
-            result = this._format(sheetData.cells);
-          } catch (e) {
-            this.logger.error('invalid sheet format.', sheetData.num, sheetData.name);
-            errList = errList || [];
-            errList.push({
-              num: sheetData.num,
-              name: sheetData.name,
-              error: e,
-            });
-            return done();
-          }
-
-          async.setImmediate(() => {
-            done(null, {
-              num: sheetData.num,
-              name: sheetData.name,
-              opts: result.opts,
-              list: result.list,
-            });
-          });
-        }, (err, result) => {
-          if (err) {
-            return next(err);
-          }
-
-          next(null, _.compact(result), errList);
+  async parse(filepath: string, sheets: [], callback: Function) {
+    let excelData;
+    try {
+      excelData = await excelParser.execute(filepath, sheets);
+    } catch (e) {
+      return callback(e);
+    }
+    let errList: any;
+    const promises = _.map(excelData, (sheetData) => {
+      let result: any;
+      try {
+        result = this._format(sheetData.cells);
+      } catch (e) {
+        this.logger.error('invalid sheet format.', sheetData.num, sheetData.name);
+        errList = errList || [];
+        errList.push({
+          num: sheetData.num,
+          name: sheetData.name,
+          error: e,
         });
-      },
-    ], (err, list, errList) => {
-      if (err) {
-        return callback(err);
+        return Promise.resolve();
       }
 
-      callback(null, list, errList);
+      return new Promise((resolve) => {
+        setImmediate(() => {
+          resolve({
+            num: sheetData.num,
+            name: sheetData.name,
+            opts: result.opts,
+            list: result.list,
+          });
+        });
+      });
     });
+
+    let result;
+    try {
+      result = await Promise.all(promises);
+    } catch (e) {
+      callback(e);
+      return;
+    }
+
+    callback(null, _.compact(result), errList);
   }
 
   /**
@@ -346,13 +341,13 @@ class Excel2Json {
    * @param {Array} sheetDatas
    * @param {Function} callback
    */
-  toJson(sheetDatas, callback) {
-    const collectionMap = {};
-    const optionMap = {};
-    const errors = {};
+  toJson(sheetDatas: any, callback: Function) {
+    const collectionMap: any = {};
+    const optionMap: any = {};
+    const errors: any = {};
     for (let i = 0; i < sheetDatas.length; i++) {
       const sheetData = sheetDatas[i];
-      const opts = sheetData.opts;
+      const { opts } = sheetData;
       const name = opts.name || sheetData.name;
       const refKey = opts.ref_key;
       collectionMap[name] = collectionMap[name] || {};
@@ -386,4 +381,4 @@ class Excel2Json {
   }
 }
 
-module.exports = new Excel2Json();
+export default new Excel2Json();

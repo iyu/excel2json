@@ -7,8 +7,9 @@
     "node": ">=4"
   },
   "scripts": {
+    "build": "tsc",
     "test": "mocha -r should -R spec --recursive test",
-    "lint": "eslint ."
+    "lint": "eslint --ext .js,.ts ."
   },
   "repository": {
     "type": "git",
@@ -27,17 +28,23 @@
     "url": "https://github.com/iyu/excel2json/issues"
   },
   "dependencies": {
-    "libxmljs": "^0.18.7",
-    "lodash": "^4.17.4",
-    "neo-async": "^2.2.2",
-    "node-zip": "^1.1.0"
+    "jszip": "^3.2.2",
+    "libxmljs": "^0.19.7",
+    "lodash": "^4.17.15"
   },
   "devDependencies": {
-    "eslint": "^3.19.0",
-    "eslint-config-airbnb-base": "^11.2.0",
+    "@types/jszip": "^3.1.6",
+    "@types/libxmljs": "^0.18.3",
+    "@types/lodash": "^4.14.144",
+    "@types/node": "^12.11.6",
+    "@typescript-eslint/eslint-plugin": "^2.5.0",
+    "@typescript-eslint/parser": "^2.5.0",
+    "eslint": "^6.5.1",
+    "eslint-config-airbnb-base": "^14.0.0",
     "eslint-plugin-import": "^2.6.0",
     "jshint": "^2.6.3",
-    "mocha": "^2.2.1",
-    "should": "^5.1.0"
+    "mocha": "^6.2.2",
+    "should": "^5.1.0",
+    "typescript": "^3.6.4"
   }
 }

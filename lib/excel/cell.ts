@@ -1,24 +1,21 @@
 /**
  * @fileOverview cell converter
- * @name cell.js
+ * @name cell
  * @author Yuhei Aihara
  */
 
-'use strict';
+import zlib from 'zlib';
 
-const zlib = require('zlib');
+import _ from 'lodash';
+import libxmljs from 'libxmljs';
 
-const _ = require('lodash');
-const async = require('neo-async');
-const libxmljs = require('libxmljs');
-
-const logger = require('../logger');
+import logger from '../logger';
 
 /**
  * @param {String} cell
  */
-function getCellCoord(cell) {
-  const cells = cell.match(/^(\D+)(\d+)$/);
+function getCellCoord(cell: string) {
+  const cells = cell.match(/^(\D+)(\d+)$/) || [];
 
   return {
     cell,
@@ -27,13 +24,13 @@ function getCellCoord(cell) {
   };
 }
 
-module.exports = (cellNodes, strings, ns) => {
-  const result = [];
+export default (cellNodes: any, strings: any, ns: any) => {
+  const result: any = [];
   _.forEach(cellNodes, (cellNode) => {
     const coord = getCellCoord(cellNode.attr('r').value());
     const type = cellNode.attr('t');
     const id = cellNode.get('a:v', ns);
-    let value;
+    let value: string;
 
     if (!id) {
       // empty cell
@@ -67,41 +64,39 @@ module.exports = (cellNodes, strings, ns) => {
 };
 
 if (require.main === module) {
-  process.on('message', (data) => {
+  process.on('message', async (data) => {
     if (data.exit) {
       process.exit();
     }
 
-    const ns = data.ns;
-    const start = data.start;
-    const end = data.end;
-
-    async.parallel({
-      strings: (next) => {
-        zlib.unzip(new Buffer(data.strings, 'base64'), next);
-      },
-      sheet: (next) => {
-        zlib.unzip(new Buffer(data.sheets, 'base64'), next);
-      },
-    }, (err, unzip) => {
-      if (err) {
-        logger.error(err.stack);
+    const { ns, start, end } = data;
+    const unzip: any = {};
+    try {
+      unzip.strings = await zlib.unzip(Buffer.from(data.strings, 'base64'), (ret) => { return ret; });
+      unzip.sheet = await zlib.unzip(Buffer.from(data.sheets, 'base64'), (ret) => { return ret; });
+    } catch (err) {
+      logger.error(err.stack);
+      if (process.send) {
         process.send({ err });
       }
+    }
 
-      const strings = libxmljs.parseXml(unzip.strings);
-      const sheet = libxmljs.parseXml(unzip.sheet);
-      const cellNodes = sheet.find('/a:worksheet/a:sheetData/a:row/a:c', ns);
+    const strings = libxmljs.parseXml(unzip.strings);
+    const sheet = libxmljs.parseXml(unzip.sheet);
+    const cellNodes = sheet.find('/a:worksheet/a:sheetData/a:row/a:c');
 
-      const result = module.exports(cellNodes.slice(start, end), strings, ns);
+    const result = module.exports(cellNodes.slice(start, end), strings, ns);
 
+    if (process.send) {
       process.send({ result });
-    });
+    }
   });
 
   process.on('uncaughtException', (err) => {
     logger.error(err.stack);
-    process.send({ err });
+    if (process.send) {
+      process.send({ err });
+    }
     process.exit(1);
   });
 }

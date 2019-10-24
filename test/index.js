@@ -1,5 +1,3 @@
-'use strict';
-
 const should = require('should');
 
 const excel2json = require('../');
