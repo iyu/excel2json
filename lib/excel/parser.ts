@@ -13,12 +13,24 @@ import _ from 'lodash';
 import libxmljs from 'libxmljs';
 import JSZip from 'jszip';
 
-import cellConverter from './cell';
+import cellConverter, { CustomDocument, ProcessSendData, Cell } from './cell';
 import logger from '../logger';
+
+interface Files {
+  strings: { contents: string; };
+  book: { contents: string; };
+  sheets: Array<{ num: number; contents: string; }>
+}
+
+interface Data {
+  num: number;
+  name: string;
+  cells: Cell[];
+}
 
 const XML_NS = { a: 'http://schemas.openxmlformats.org/spreadsheetml/2006/main' };
 
-async function asText(zip: JSZip, files: any, sheetNum: any) {
+async function asText(zip: JSZip, files: Files, sheetNum: number) {
   const raw = zip.files[`xl/worksheets/sheet${sheetNum}.xml`];
   const contents = raw && await raw.async('text');
   if (!contents) {
@@ -39,10 +51,10 @@ class ExcelParser {
    * @param {String} filepath
    * @param {Array} sheets
    */
-  async extractFiles(filepath: string, sheets: number[]) {
-    const files: { strings: any, book: any, sheets: any } = {
-      strings: {},
-      book: {},
+  async extractFiles(filepath: string, sheets: number[]): Promise<Files> {
+    const files: Files = {
+      strings: { contents: '' },
+      book: { contents: '' },
       sheets: [],
     };
 
@@ -101,17 +113,17 @@ class ExcelParser {
   /**
    * @param {Object} files
    */
-  async extractData(files: any) {
-    let strings: libxmljs.Document;
-    let sheetNames: any = [];
-    let sheets: Array<{ num: number; name: string; contents: string; xml: any; }>;
+  async extractData(files: Files): Promise<Data[]> {
+    let strings: CustomDocument;
+    let sheetNames: string[] = [];
+    let sheets: { num: number; name: string; contents: string; xml: CustomDocument; }[];
 
     try {
-      const book: any = libxmljs.parseXml(files.book.contents);
-      strings = libxmljs.parseXml(files.strings.contents);
+      const book = libxmljs.parseXml(files.book.contents) as CustomDocument;
+      strings = libxmljs.parseXml(files.strings.contents) as CustomDocument;
       sheetNames = _.map(book.find('//a:sheets//a:sheet', XML_NS), (tag) => {
         const name = tag.attr('name');
-        return name && name.value();
+        return name ? name.value() : '';
       });
 
       // sheets and sheetNames were retained the arrangement.
@@ -120,7 +132,7 @@ class ExcelParser {
           num: sheetObj.num,
           name: sheetNames[sheetObj.num - 1],
           contents: sheetObj.contents,
-          xml: libxmljs.parseXml(sheetObj.contents),
+          xml: libxmljs.parseXml(sheetObj.contents) as CustomDocument,
         };
       });
     } catch (e) {
@@ -128,12 +140,12 @@ class ExcelParser {
       throw e;
     }
 
-    const result: any = [];
+    const result: Data[] = [];
     await Promise.all(_.map(sheets, (sheetObj) => {
       return (async () => {
         const sheet = sheetObj.xml;
         const cellNodes = sheet.find('/a:worksheet/a:sheetData/a:row/a:c', XML_NS);
-        const tasks: any = [];
+        const tasks: { start: number, end: number }[] = [];
 
         if (cellNodes.length < 20000) {
           result.push({
@@ -152,18 +164,32 @@ class ExcelParser {
           });
         });
 
-        const sendData: any = {
-          strings: await zlib.deflate(files.strings.contents, (ret) => { return ret; }),
-          sheets: zlib.deflate(sheetObj.contents, (ret) => { return ret; }),
+        const stringsBuf = await new Promise((resolve, reject) => {
+          zlib.deflate(files.strings.contents, (err, buf) => {
+            if (err) {
+              return reject(err);
+            }
+            resolve(buf);
+          });
+        }) as Buffer;
+        const sheetsBuf = await new Promise((resolve, reject) => {
+          zlib.deflate(sheetObj.contents, (err, buf) => {
+            if (err) {
+              return reject(err);
+            }
+            resolve(buf);
+          });
+        }) as Buffer;
+        const sendData: ProcessSendData = {
+          strings: stringsBuf.toString('base64'),
+          sheets: sheetsBuf.toString('base64'),
+          ns: XML_NS,
         };
-        sendData.strings = sendData.strings.toString('base64');
-        sendData.sheets = sendData.sheets.toString('base64');
-        sendData.ns = XML_NS;
 
         const cells = await Promise.all(_.map(tasks, (task) => {
           const _cellConverter = cp.fork(path.join(__dirname, './cell'));
           let _err: Error;
-          let _result: any;
+          let _result: Cell[];
 
           return new Promise((resolve, reject) => {
             _cellConverter.on('message', (data) => {
@@ -188,19 +214,15 @@ class ExcelParser {
         result.push({
           num: sheetObj.num,
           name: sheetObj.name,
-          cells: _.flatten(cells),
+          cells: _.flatten(cells) as Cell[],
         });
       })();
     }));
     return result;
   }
 
-  /**
-   * @param {String} filepath
-   * @param {Array} sheets
-   */
-  async execute(filepath: string, sheets: any) {
-    const files = await this.extractFiles(filepath, sheets);
+  async execute(filePath: string, sheets: number[]): Promise<Data[]> {
+    const files = await this.extractFiles(filePath, sheets);
     const result = await this.extractData(files);
     return result;
   }

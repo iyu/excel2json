@@ -25,3 +25,6 @@ rules:
   prefer-rest-params: off
   prefer-spread: off
   strict: [error, global]
+
+  no-unused-vars: off
+  "@typescript-eslint/no-unused-vars": error

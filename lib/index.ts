@@ -8,42 +8,86 @@
 import _ from 'lodash';
 
 import excelParser from './excel/parser';
-import logger from './logger';
+import logger, { ILogger } from './logger';
+
+interface Opts {
+  // Cell with a custom sheet option.
+  option_cell?: string; // eslint-disable-line camelcase
+  // Line with a data attribute.
+  attr_line?: number; // eslint-disable-line camelcase
+  // Line with a data.
+  data_line?: number; // eslint-disable-line camelcase
+  // ref key
+  ref_key?: string; // eslint-disable-line camelcase
+  // Custom logger.
+  logger?: ILogger;
+}
+
+interface DefaultOpts {
+  option_cell: string; // eslint-disable-line camelcase
+  attr_line: number; // eslint-disable-line camelcase
+  data_line: number; // eslint-disable-line camelcase
+  ref_key: string; // eslint-disable-line camelcase
+  logger?: ILogger;
+}
+
+interface Cell {
+  cell: string;
+  column: string;
+  row: number;
+  value: string;
+}
+
+interface CellOpts {
+  attr_line: number; // eslint-disable-line camelcase
+  data_line: number; // eslint-disable-line camelcase
+  ref_key: string; // eslint-disable-line camelcase
+  format?: { [key:string]: { type: string|null; key: string; keys: string[] } };
+  name?: string;
+  type?: string;
+  key?: string;
+}
+
+interface ParseResult {
+  num: number;
+  name: string;
+  opts: CellOpts;
+  list: any[];
+}
+interface ParseError {
+  num: number;
+  name: string;
+  error: Error;
+}
 
 class Excel2Json {
-  public opts = {
-    // Cell with a custom sheet option.
+  public opts: DefaultOpts = {
     option_cell: 'A1',
-    // Line with a data attribute.
     attr_line: 2,
-    // Line with a data.
     data_line: 4,
-    // ref key
     ref_key: '_id',
-    // Custom logger.
-    logger: undefined,
   }
 
-  public logger: any = logger
+  public logger: ILogger = logger
 
-  private _parser: { [key: string]: Function } = {
-    number: (d: any) => {
+  private _parser: { [key: string]: (d: string) => number|boolean|string|any; } = {
+    number: (d: string) => {
       if (d.length >= 18) {
         // IEEE754
         return Number(Number(d).toFixed(8));
       }
       return Number(d);
     },
-    num: (d: any) => {
+    num: (d: string) => {
       return this._parser.number(d);
     },
-    boolean: (d: any) => {
+    boolean: (d: string) => {
       return !!d && d.toLowerCase() !== 'false' && d !== '0';
     },
-    bool: (d: any) => {
+    bool: (d: string) => {
       return this._parser.boolean(d);
     },
-    date: (d: any) => {
+    date: (d: string) => {
       return Math.round(
         (
           ((Number(d) - 25569) * 24)
@@ -51,7 +95,7 @@ class Excel2Json {
         ) * 3600000,
       );
     },
-    auto: (d: any) => {
+    auto: (d: string) => {
       return Number.isFinite(Number(d)) ? d : this._parser.number(d);
     },
   }
@@ -68,7 +112,7 @@ class Excel2Json {
    *     logger: CustomLogger
    * };
    */
-  setup(options: any) {
+  setup(options: Opts) {
     _.assign(this.opts, options);
 
     if (this.opts.logger) {
@@ -88,12 +132,12 @@ class Excel2Json {
    *     { cell: 'A1', value: '{}' }, { cell: 'A4', value: '_id' },,,
    * ]
    */
-  _format(cells: any) {
-    let beforeRow: any;
-    let idx: any = {};
-    const list: any = [];
+  _format(cells: Cell[]) {
+    let beforeRow: number;
+    let idx: { [key: string]: { type: string; value: number } } = {};
+    const list: any[] = [];
 
-    const opts: any = {
+    const opts: CellOpts = {
       attr_line: this.opts.attr_line,
       data_line: this.opts.data_line,
       ref_key: this.opts.ref_key,
@@ -131,7 +175,7 @@ class Excel2Json {
 
       const format = opts.format && opts.format[cell.column];
       let data: any;
-      let _idx;
+      let _idx: any;
 
       if (cell.row < opts.data_line || !format) {
         return;
@@ -208,7 +252,7 @@ class Excel2Json {
         }
 
         const type = format.type && format.type.toLowerCase();
-        if (this._parser[type]) {
+        if (type && this._parser[type]) {
           data[_key] = isSplitArray ? cell.value.split(',').map(this._parser[type]) : this._parser[type](cell.value);
         } else {
           data[_key] = isSplitArray ? cell.value.split(',') : cell.value;
@@ -229,7 +273,7 @@ class Excel2Json {
    * @param data
    * @private
    */
-  _findOrigin(dataMap: any, opts: any, data: any) {
+  _findOrigin(dataMap: any, opts: CellOpts, data: any) {
     let origin = dataMap[data.__ref];
     if (!origin || !opts.key) {
       this.logger.error('not found origin.', JSON.stringify(data));
@@ -290,14 +334,18 @@ class Excel2Json {
    * @param {Array} sheets
    * @param {Function} callback
    */
-  async parse(filepath: string, sheets: [], callback: Function) {
+  async parse(
+    filepath: string,
+    sheets: [],
+    callback: (err: Error | null, result?: ParseResult[], errList?: ParseError[]) => void,
+  ) {
     let excelData;
     try {
       excelData = await excelParser.execute(filepath, sheets);
     } catch (e) {
       return callback(e);
     }
-    let errList: any;
+    let errList: ParseError[] | undefined;
     const promises = _.map(excelData, (sheetData) => {
       let result: any;
       try {
@@ -325,12 +373,11 @@ class Excel2Json {
       });
     });
 
-    let result;
+    let result: ParseResult[];
     try {
-      result = await Promise.all(promises);
+      result = await Promise.all(promises) as ParseResult[];
     } catch (e) {
-      callback(e);
-      return;
+      return callback(e);
     }
 
     callback(null, _.compact(result), errList);
@@ -341,10 +388,10 @@ class Excel2Json {
    * @param {Array} sheetDatas
    * @param {Function} callback
    */
-  toJson(sheetDatas: any, callback: Function) {
-    const collectionMap: any = {};
-    const optionMap: any = {};
-    const errors: any = {};
+  toJson(sheetDatas: ParseResult[], callback: Function) {
+    const collectionMap: { [key:string]: any } = {};
+    const optionMap: { [key:string]: CellOpts; } = {};
+    const errors: { [key:string]: any } = {};
     for (let i = 0; i < sheetDatas.length; i++) {
       const sheetData = sheetDatas[i];
       const { opts } = sheetData;

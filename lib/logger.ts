@@ -8,7 +8,13 @@
 
 import path from 'path';
 
-class OriginalLogger {
+export interface ILogger {
+  info(...args: any[]): void;
+  debug(...args: any[]): void;
+  error(...args: any[]): void;
+}
+
+class OriginalLogger implements ILogger {
   public COLOR = {
     BLACK: '\u001b[30m',
     RED: '\u001b[31m',

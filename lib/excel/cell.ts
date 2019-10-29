@@ -7,14 +7,45 @@
 import zlib from 'zlib';
 
 import _ from 'lodash';
-import libxmljs from 'libxmljs';
+import libxmljs, { Document, Element, StringMap } from 'libxmljs';
 
 import logger from '../logger';
 
-/**
- * @param {String} cell
- */
-function getCellCoord(cell: string) {
+interface Coord {
+  // 'A1'
+  cell: string;
+  // 'A'
+  column: string;
+  // 1
+  row: number;
+}
+
+export interface Cell extends Coord {
+  // value
+  value: string;
+}
+
+interface CustomElement extends Element {
+  // eslint-disable-next-line camelcase
+  get(xpath: string, ns_uri?: string): Element | null;
+  // eslint-disable-next-line camelcase
+  get(xpath: string, ns_uri?: StringMap): Element | null;
+}
+
+export interface CustomDocument extends Document {
+  find(xpath: string, namespaces?: StringMap): CustomElement[];
+}
+
+export interface ProcessSendData {
+  start?: number;
+  end?: number;
+  strings?: string; // base64
+  sheets?: string; // base64
+  ns?: StringMap;
+  exit?: boolean;
+}
+
+const getCellCoord = (cell: string): Coord => {
   const cells = cell.match(/^(\D+)(\d+)$/) || [];
 
   return {
@@ -22,12 +53,13 @@ function getCellCoord(cell: string) {
     column: cells[1],
     row: parseInt(cells[2], 10),
   };
-}
+};
 
-export default (cellNodes: any, strings: any, ns: any) => {
-  const result: any = [];
+export default (cellNodes: CustomElement[], strings: CustomDocument, ns: StringMap): Cell[] => {
+  const result: Cell[] = [];
   _.forEach(cellNodes, (cellNode) => {
-    const coord = getCellCoord(cellNode.attr('r').value());
+    const attr = cellNode.attr('r');
+    const coord = getCellCoord(attr ? attr.value() : '');
     const type = cellNode.attr('t');
     const id = cellNode.get('a:v', ns);
     let value: string;
@@ -40,7 +72,8 @@ export default (cellNodes: any, strings: any, ns: any) => {
     if (type && type.value() === 's') {
       value = '';
       _.forEach(strings.find(`//a:si[${parseInt(id.text(), 10) + 1}]//a:t`, ns), (t) => {
-        if (t.get('..').name() !== 'rPh') {
+        const elm = t.get('..');
+        if (elm && elm.name() !== 'rPh') {
           value += t.text();
         }
       });
@@ -64,26 +97,42 @@ export default (cellNodes: any, strings: any, ns: any) => {
 };
 
 if (require.main === module) {
-  process.on('message', async (data) => {
+  process.on('message', async (data: ProcessSendData) => {
     if (data.exit) {
       process.exit();
     }
 
     const { ns, start, end } = data;
-    const unzip: any = {};
-    try {
-      unzip.strings = await zlib.unzip(Buffer.from(data.strings, 'base64'), (ret) => { return ret; });
-      unzip.sheet = await zlib.unzip(Buffer.from(data.sheets, 'base64'), (ret) => { return ret; });
-    } catch (err) {
-      logger.error(err.stack);
-      if (process.send) {
-        process.send({ err });
-      }
-    }
+    const unzip: { strings: string, sheets: string } = {
+      strings: await new Promise((resolve) => {
+        zlib.unzip(Buffer.from(data.strings || '', 'base64'), (err, buf) => {
+          if (err) {
+            logger.error(err.stack);
+            if (process.send) {
+              process.send({ err });
+            }
+            return;
+          }
+          resolve(buf.toString());
+        });
+      }),
+      sheets: await new Promise((resolve) => {
+        zlib.unzip(Buffer.from(data.sheets || '', 'base64'), (err, buf) => {
+          if (err) {
+            logger.error(err.stack);
+            if (process.send) {
+              process.send({ err });
+            }
+            return;
+          }
+          resolve(buf.toString());
+        });
+      }),
+    };
 
     const strings = libxmljs.parseXml(unzip.strings);
-    const sheet = libxmljs.parseXml(unzip.sheet);
-    const cellNodes = sheet.find('/a:worksheet/a:sheetData/a:row/a:c');
+    const sheets = libxmljs.parseXml(unzip.sheets) as CustomDocument;
+    const cellNodes = sheets.find('/a:worksheet/a:sheetData/a:row/a:c', ns);
 
     const result = module.exports(cellNodes.slice(start, end), strings, ns);
 
