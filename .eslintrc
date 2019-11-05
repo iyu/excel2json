@@ -8,6 +8,14 @@ env:
   node: true
   mocha: true
 
+settings:
+  import/resolver:
+    node:
+      extensions:
+        - .js
+        - .json
+        - .ts
+
 parser: "@typescript-eslint/parser"
 parserOptions:
   ecmaVersion: 6

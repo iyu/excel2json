@@ -2,14 +2,19 @@
   "name": "excel2json",
   "version": "1.0.1",
   "description": "excel2json",
-  "main": "index.js",
+  "main": "build/index.js",
+  "files": [
+    "build"
+  ],
   "engines": {
-    "node": ">=4"
+    "node": ">=8"
   },
   "scripts": {
     "build": "tsc",
+    "prepublish": "npm run build",
+    "pretest": "npm run build",
     "test": "mocha -r should -R spec --recursive test",
-    "lint": "eslint --ext .js,.ts ."
+    "lint": "eslint ."
   },
   "repository": {
     "type": "git",

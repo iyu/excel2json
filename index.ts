@@ -1,3 +1,3 @@
-import excel2json from './lib';
+import excel2json from './src';
 
 export = excel2json;
